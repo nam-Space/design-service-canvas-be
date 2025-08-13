@@ -22,17 +22,9 @@ exports.getUserDesigns = async (req, res) => {
 
 exports.getUserDesignsByID = async (req, res) => {
     try {
-        const userId = req.user.userId
         const designId = req.params.id
 
-        const design = await Design.findOne({ _id: designId, userId })
-
-        if (!design) {
-            return res.status(404).json({
-                success: false,
-                message: `Design not found! Or you don't have permission to view it.`
-            })
-        }
+        const design = await Design.findOne({ _id: designId })
 
         return res.status(200).json({
             success: true,
@@ -51,21 +43,17 @@ exports.getUserDesignsByID = async (req, res) => {
 exports.saveDesign = async (req, res) => {
     try {
         const userId = req.user.userId
-        const { designId, name, canvasData, width, height, category } = req.body
+        const email = req.user.email
+        const { designId, name, canvasData, width, height, category, publicFor } = req.body
         if (designId) {
-            const design = await Design.findOne({ _id: designId, userId })
-            if (!design) {
-                return res.status(404).json({
-                    success: false,
-                    message: `Design not found! Or you don't have permission to view it.`
-                })
-            }
+            const design = await Design.findOne({ _id: designId })
 
             if (name) design.name = name
             if (canvasData) design.canvasData = canvasData
             if (width) design.width = width
             if (height) design.height = height
             if (category) design.category = category
+            if (publicFor) design.publicFor = publicFor
 
             design.updatedAt = Date.now()
             const updatedDesign = await design.save()
@@ -78,6 +66,7 @@ exports.saveDesign = async (req, res) => {
         else {
             const newDesign = new Design({
                 userId,
+                email,
                 name: name || 'Untitled Design',
                 canvasData,
                 width,
